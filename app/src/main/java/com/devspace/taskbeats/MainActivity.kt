@@ -5,11 +5,17 @@ import android.os.Bundle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.room.Room
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
+
+    // Variáveis globais - Posso usá-las em todo o escopo do projeto
+
+    private var categories = listOf<CategoryUiData>()
+    private var tasks = listOf<TaskUiData>()
 
     private val db by lazy {
         Room.databaseBuilder(
@@ -37,31 +43,37 @@ class MainActivity : AppCompatActivity() {
         val categoryAdapter = CategoryListAdapter()
 
         categoryAdapter.setOnClickListener { selected ->
-//            val categoryTemp = categories.map { item ->
-//                when {
-//                    item.name == selected.name && !item.isSelected -> item.copy(isSelected = true)
-//                    item.name == selected.name && item.isSelected -> item.copy(isSelected = false)
-//                    else -> item
-//                }
-//            }
+            if(selected.name == "+"){
+                Snackbar.make(rvCategory, "+ is selected", Snackbar.LENGTH_LONG).show()
+            } else {
+                val categoryTemp = categories.map { item ->
+                    when {
+                        item.name == selected.name && !item.isSelected -> item.copy(isSelected = true)
+                        item.name == selected.name && item.isSelected -> item.copy(isSelected = false)
+                        else -> item
+                    }
+                }
 
-//            val taskTemp =
-//                if (selected.name != "ALL") {
-//                    tasks.filter { it.category == selected.name }
-//                } else {
-//                    tasks
-//                }
-//            taskAdapter.submitList(taskTemp)
-//
-//            categoryAdapter.submitList(categoryTemp)
+                val taskTemp =
+                    if (selected.name != "ALL") {
+                        tasks.filter { it.category == selected.name }
+                    } else {
+                        tasks
+                    }
+                taskAdapter.submitList(taskTemp)
+
+                categoryAdapter.submitList(categoryTemp)
+
+            }
+
+            rvCategory.adapter = categoryAdapter
+            getCategoriesFromDataBase(categoryAdapter)
+
+            rvTask.adapter = taskAdapter
+            getTasksFromDataBase(taskAdapter)
         }
-
-        rvCategory.adapter = categoryAdapter
-        getCategoriesFromDataBase(categoryAdapter)
-
-        rvTask.adapter = taskAdapter
-        getTasksFromDataBase(taskAdapter)
     }
+
 
     private fun getCategoriesFromDataBase(adapter: CategoryListAdapter){
         GlobalScope.launch(Dispatchers.IO){
@@ -71,8 +83,20 @@ class MainActivity : AppCompatActivity() {
                     name = it.name,
                     isSelected = it.isSelected
                 )
+            } // Adicionando uma categoria "fake" com um botão de plus
+                .toMutableList()
+
+            categoriesUiData.add(
+                CategoryUiData(
+                    name = "+",
+                    isSelected = false
+                )
+            )
+
+            GlobalScope.launch(Dispatchers.Main){
+                categories = categoriesUiData
+                adapter.submitList(categoriesUiData)
             }
-            adapter.submitList(categoriesUiData)
         }
     }
 
@@ -85,9 +109,10 @@ class MainActivity : AppCompatActivity() {
                     category = it.category
                 )
             }
-
-            adapter.submitList(tasksUiData)
+            GlobalScope.launch(Dispatchers.Main){
+                tasks = tasksUiData
+                adapter.submitList(tasksUiData)
+            }
         }
     }
-
 }
