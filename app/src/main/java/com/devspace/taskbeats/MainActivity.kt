@@ -2,10 +2,9 @@ package com.devspace.taskbeats
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.room.Room
-import com.google.android.material.snackbar.Snackbar
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -18,6 +17,11 @@ class MainActivity : AppCompatActivity() {
     private var tasks = listOf<TaskUiData>()
 
     private val categoryAdapter = CategoryListAdapter()
+
+    // Inicializando os Adapters
+    private val taskAdapter by lazy {
+        TaskListAdapter()
+    }
 
     private val db by lazy {
         Room.databaseBuilder(
@@ -41,9 +45,15 @@ class MainActivity : AppCompatActivity() {
         // Inicializando os RecyclerViews
         val rvCategory = findViewById<RecyclerView>(R.id.rv_categories)
         val rvTask = findViewById<RecyclerView>(R.id.rv_tasks)
+        val fabCreateTask = findViewById<FloatingActionButton>(R.id.fab_create_task)
 
-        // Inicializando os Adapters
-        val taskAdapter = TaskListAdapter()
+        fabCreateTask.setOnClickListener{
+            showCreateUpdateTaskBottomSheet()
+        }
+
+        taskAdapter.setOnClickListener { task ->
+            showCreateUpdateTaskBottomSheet(task)
+        }
 
         // Configurando os Adapters e carregando os dados em background com o Global Scope
         rvCategory.adapter = categoryAdapter
@@ -53,7 +63,7 @@ class MainActivity : AppCompatActivity() {
 
         rvTask.adapter = taskAdapter
         GlobalScope.launch(Dispatchers.IO){
-            getTasksFromDataBase(taskAdapter)
+            getTasksFromDataBase()
         }
 
 
@@ -119,20 +129,19 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-    private fun getTasksFromDataBase(adapter: TaskListAdapter){
-        GlobalScope.launch(Dispatchers.IO){
+    private fun getTasksFromDataBase(){
             val tasksFromDb: List<TaskEntity> = taskDao.getAll()
-            val tasksUiData = tasksFromDb.map {
+            val tasksUiData: List<TaskUiData> = tasksFromDb.map {
                 TaskUiData(
+                    id = it.id,
                     name = it.name,
                     category = it.category
                 )
             }
             GlobalScope.launch(Dispatchers.Main){
                 tasks = tasksUiData
-                adapter.submitList(tasksUiData)
+                taskAdapter.submitList(tasksUiData)
             }
-        }
     }
 
     private fun insertCategory(categoryEntity: CategoryEntity){
@@ -140,6 +149,30 @@ class MainActivity : AppCompatActivity() {
             categoryDAO.inset(categoryEntity)
             getCategoriesFromDataBase()
         }
+    }
+
+    private fun insertTask(taskEntity: TaskEntity){
+        GlobalScope.launch(Dispatchers.IO){
+            taskDao.insert(taskEntity)
+            getTasksFromDataBase()
+        }
+    }
+
+    private fun showCreateUpdateTaskBottomSheet(taskUiData: TaskUiData? = null){
+        val createTaskBottomSheet = CreateorUpdateTaskBottomSheet(
+            task = taskUiData,
+            categoryList = categories
+        ){ taskToBeCreated ->
+            val taskEntityToBeInsert = TaskEntity(
+                name = taskToBeCreated.name,
+                category = taskToBeCreated.category
+            )
+            insertTask(taskEntityToBeInsert)
+        }
+        createTaskBottomSheet.show(
+            supportFragmentManager,
+            "createTaskBottomSheet"
+        )
     }
 }
 
