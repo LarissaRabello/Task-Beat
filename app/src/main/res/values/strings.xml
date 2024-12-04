@@ -1,4 +1,8 @@
 <resources>
     <string name="app_name">TaskBeats</string>
     <string name="home_title">Task Beat</string>
+    <string name="create_task_title">Criar uma tarefa</string>
+    <string name="create">Criar</string>
+    <string name="update_task_title">Atualizar a tarefa</string>
+    <string name="update">Atualizar</string>
 </resources>
