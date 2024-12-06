@@ -15,6 +15,7 @@ class MainActivity : AppCompatActivity() {
     // Variáveis globais - Posso usá-las em todo o escopo do projeto
 
     private var categories = listOf<CategoryUiData>()
+    private var categoriesEntity = listOf<CategoryEntity>()
     private var tasks = listOf<TaskUiData>()
 
     private val categoryAdapter = CategoryListAdapter()
@@ -59,6 +60,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         categoryAdapter.setOnLongClickListener { categoryToBeDeleted ->
+            if(categoryToBeDeleted.name != "+" && categoryToBeDeleted.name != "ALL"){
+
             val title = this.getString(R.string.category_delete_title)
             val description = this.getString(R.string.category_delete_description)
             val btnText = this.getString(R.string.delete)
@@ -75,6 +78,7 @@ class MainActivity : AppCompatActivity() {
                 deleteCategory(categoryEntityToBeDeleted)
             }
         }
+    }
 
         // Configurando os Adapters e carregando os dados em background com o Global Scope
         rvCategory.adapter = categoryAdapter
@@ -104,21 +108,21 @@ class MainActivity : AppCompatActivity() {
             } else {
                 val categoryTemp = categories.map { item ->
                     when {
+                        item.name == selected.name && item.isSelected -> item.copy(isSelected = true)
                         item.name == selected.name && !item.isSelected -> item.copy(isSelected = true)
-                        item.name == selected.name && item.isSelected -> item.copy(isSelected = false)
+                        item.name != selected.name && item.isSelected -> item.copy(isSelected = false)
+
                         else -> item
                     }
                 }
 
-                val taskTemp =
                     if (selected.name != "ALL") {
-                        tasks.filter { it.category == selected.name }
+                        filterTaskByCategoryName(selected.name)
                     } else {
-                        tasks
+                        GlobalScope.launch(Dispatchers.IO){
+                            getTasksFromDataBase()
+                        }
                     }
-
-                taskAdapter.submitList(taskTemp)
-
                 categoryAdapter.submitList(categoryTemp)
 
             }
@@ -148,6 +152,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun getCategoriesFromDataBase(){
             val categoriesFromDB: List<CategoryEntity> = categoryDAO.getAll()
+            categoriesEntity = categoriesFromDB
             val categoriesUiData = categoriesFromDB.map {
                 CategoryUiData(
                     name = it.name,
@@ -163,9 +168,19 @@ class MainActivity : AppCompatActivity() {
                 )
             )
 
+
+            val categoryListTemp = mutableListOf(
+                CategoryUiData(
+                    name = "ALL",
+                    isSelected = true,
+                )
+            )
+
+            categoryListTemp.addAll(categoriesUiData)
+
             GlobalScope.launch(Dispatchers.Main){
-                categories = categoriesUiData
-                categoryAdapter.submitList(categoriesUiData)
+                categories = categoryListTemp
+                categoryAdapter.submitList(categories)
             }
         }
 
@@ -180,7 +195,7 @@ class MainActivity : AppCompatActivity() {
             }
             GlobalScope.launch(Dispatchers.Main){
                 tasks = tasksUiData
-                taskAdapter.submitList(tasksUiData)
+                taskAdapter.submitList(tasks)
             }
     }
 
@@ -214,16 +229,35 @@ class MainActivity : AppCompatActivity() {
 
     private fun deleteCategory(categoryEntity: CategoryEntity){
         GlobalScope.launch(Dispatchers.IO){
+            val tasksToBeDeleted = taskDao.getAllByCategoryName(categoryEntity.name)
+            taskDao.deleteAll(tasksToBeDeleted)
             categoryDAO.delete(categoryEntity)
             getCategoriesFromDataBase()
+            getTasksFromDataBase()
         }
     }
 
+    private fun filterTaskByCategoryName(category: String){
+        GlobalScope.launch(Dispatchers.IO){
+            val tasksFromDb: List<TaskEntity> = taskDao.getAllByCategoryName(category)
+            val tasksUiData: List<TaskUiData> = tasksFromDb.map {
+                TaskUiData(
+                    id = it.id,
+                    name = it.name,
+                    category = it.category
+                )
+            }
+
+            GlobalScope.launch(Dispatchers.Main) {
+                taskAdapter.submitList(tasksUiData)
+            }
+        }
+    }
 
     private fun showCreateUpdateTaskBottomSheet(taskUiData: TaskUiData? = null){
         val createTaskBottomSheet = CreateorUpdateTaskBottomSheet(
             task = taskUiData,
-            categoryList = categories,
+            categoryList = categoriesEntity,
             onCreateClicked = { taskToBeCreated ->
                 val taskEntityToBeInsert = TaskEntity(
                     name = taskToBeCreated.name,
@@ -255,6 +289,3 @@ class MainActivity : AppCompatActivity() {
         )
     }
 }
-
-
-
