@@ -25,7 +25,7 @@ class InfoBottomSheet(
         val view = inflater.inflate(R.layout.info_bottom_sheet, container, false)
 
         val tvTitle = view.findViewById<TextView>(R.id.tv_info_title)
-        val tvDesc = view.findViewById<Button>(R.id.tv_info_description)
+        val tvDesc = view.findViewById<TextView>(R.id.tv_info_description)
         val btnAction = view.findViewById<Button>(R.id.btn_info)
 
         tvTitle.text = title
@@ -34,6 +34,7 @@ class InfoBottomSheet(
 
         btnAction.setOnClickListener {
             onClicked.invoke()
+            dismiss()
         }
 
         return view

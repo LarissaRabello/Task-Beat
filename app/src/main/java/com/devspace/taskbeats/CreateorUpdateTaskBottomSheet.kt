@@ -17,7 +17,7 @@ import com.google.android.material.textfield.TextInputEditText
 
 
 class CreateorUpdateTaskBottomSheet(
-    private val categoryList: List<CategoryUiData>,
+    private val categoryList: List<CategoryEntity>,
     private val task: TaskUiData? = null,
     private val onCreateClicked: (TaskUiData) -> Unit,
     private val onUpdateClicked: (TaskUiData) -> Unit,
@@ -41,7 +41,11 @@ class CreateorUpdateTaskBottomSheet(
         // Popular e preparar as views
         val spinner: Spinner = view.findViewById(R.id.category_list)
         var taskCategory: String? = null
-        val categoryStr: List<String> = categoryList.map { it.name }
+        val categoryListTemp = mutableListOf("Selecione a categoria")
+        categoryListTemp.addAll(
+            categoryList.map { it.name }
+        )
+        val categoryStr: List<String> = categoryListTemp
 
         ArrayAdapter(
             requireActivity().baseContext,
@@ -77,7 +81,7 @@ class CreateorUpdateTaskBottomSheet(
             btnDelete.isVisible = true
 
 
-            val currentCategory = categoryList.first { it.name == task.category }
+            val currentCategory = categoryList.firstOrNull { it.name == task.category }
             val index = categoryList.indexOf(currentCategory)
 
             spinner.setSelection(index)
@@ -94,7 +98,7 @@ class CreateorUpdateTaskBottomSheet(
 
         btnCreateorUpdate.setOnClickListener {
             val name = tieTaskName.text.toString().trim()
-            if (taskCategory != null && name.isNotEmpty()){
+            if (taskCategory == "Select" && name.isNotEmpty()){
 
                 if(task == null) {
                     onCreateClicked.invoke(
@@ -114,9 +118,8 @@ class CreateorUpdateTaskBottomSheet(
                     )
             }
                 dismiss()
-
             } else {
-                Snackbar.make(btnCreateorUpdate, "Por gentileza, seleciona a categoria", Snackbar.LENGTH_LONG).show()
+                Snackbar.make(btnCreateorUpdate, "Por gentileza, selecione a categoria", Snackbar.LENGTH_LONG).show()
             }
         }
         return view
