@@ -98,7 +98,7 @@ class CreateorUpdateTaskBottomSheet(
 
         btnCreateorUpdate.setOnClickListener {
             val name = tieTaskName.text.toString().trim()
-            if (taskCategory == "Select" && name.isNotEmpty()){
+            if (taskCategory != "Select" && name.isNotEmpty()){
 
                 if(task == null) {
                     onCreateClicked.invoke(
