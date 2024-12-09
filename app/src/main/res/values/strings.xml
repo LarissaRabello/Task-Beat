@@ -8,5 +8,7 @@
     <string name="delete">Deletar</string>
     <string name="category_delete_title">Importante</string>
     <string name="category_delete_description">Ao deletar uma categoria, automaticamente deletará todas as tarefas. Tem certeza?</string>
+    <string name="empty_categoty_title">Poxa, nenhuma categoria foi encontrada :(</string>
+    <string name="empty_categoty_description">Por gentileza, crie uma nova para começar a utilizar o Task Beat</string>
 
 </resources>
