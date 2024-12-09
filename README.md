@@ -21,9 +21,7 @@ Adicionar screenshoots
 * Drawable para uso de imagens;
 
 ## TO-DO's
-Melhorar a estilização de texto, fontes, linha e espaço entre letras, sombreamente e outras características textuais no aplicativo, assim como cores no gradiente e tabela de IMC.
-Além de trazer uma tela de onboarding e uma quarta tela com consumo de API de nutricionistas e endocrinologistas.
-
+Melhorar a estilização de texto, fontes, linha e espaço entre letras, sombreamente e outras características textuais no aplicativo.
 ## Author
 Larissa Rabello da Silva (follow me on [LinkedIn](https://www.linkedin.com/in/larissa-rabello/))
 
